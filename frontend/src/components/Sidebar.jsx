@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import logo from '../assets/logo.svg'
+import logo from '../assets/logo.png'
 import { useAuth } from '../context/AuthContext.jsx'
 const links = {
   user: [['/user', 'Dashboard'], ['/user/create', 'Create PDI Report'], ['/user/reports', 'My Reports'], ['/user/profile', 'My Profile']],

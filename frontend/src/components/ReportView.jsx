@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { getReport } from '../services/pdiApi.js'
 import StatusBadge from './StatusBadge.jsx'
 import { SECTIONS, sectionStatus, isFlagged } from './PDIForm/sections.js'
-import logo from '../assets/logo.svg'
+import logo from '../assets/logo.png'
 const tone = { PASS: 'green', 'PASS WITH OBSERVATIONS': 'amber', FAIL: 'red' }
 
 export default function ReportView({ back }) {
@@ -21,7 +21,7 @@ export default function ReportView({ back }) {
     {r.status === 'Draft' && back.startsWith('/user') && <Link className="btn" to={`/user/create/${r.id}`}>Edit Draft</Link>}
     <button className="btn ghost" onClick={() => window.print()}>Print</button><button className="btn" onClick={() => window.print()}>Download PDF</button></div></div>
     <div className="paper report">
-      <div className="rhead"><div className="rbrand"><img src={logo} alt="" width="70" /><div><b>PDI CAR VISION</b><small>PRE DELIVERY INSPECTION</small></div></div>
+      <div className="rhead"><div className="rbrand"><img src={logo} alt="" width="70" /><div><small>PRE DELIVERY INSPECTION</small></div></div>
         <div className="rmeta"><h2>PDI INSPECTION REPORT</h2><div>Report No: <b>{r.id}</b></div><div>Date: {r.date}</div><div>Inspector: {r.user}</div></div></div>
       <div className="rgrid">
         <section><h4>Vehicle Information</h4>
