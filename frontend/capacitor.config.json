@@ -1,0 +1,8 @@
+{
+  "appId": "com.pdicarvision.app",
+  "appName": "PDI Car Vision",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
