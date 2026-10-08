@@ -10,6 +10,10 @@ from ..schemas.user import UserCreate, UserUpdate, PasswordUpdate, UserOut
 router = APIRouter(prefix="/users", tags=["users"])
 
 
+# ============================================================
+# HELPER: Convert MongoDB user document to API response
+# ============================================================
+
 def _out(u: dict) -> UserOut:
     return UserOut(
         id=u["empId"],
@@ -24,11 +28,13 @@ def _out(u: dict) -> UserOut:
 
 
 # ============================================================
-# GET CURRENT USER
+# GET CURRENT LOGGED-IN USER
 # ============================================================
 
 @router.get("/me", response_model=UserOut)
-async def me(user: dict = Depends(get_current_user)):
+async def me(
+    user: dict = Depends(get_current_user),
+):
     return _out(user)
 
 
@@ -68,7 +74,9 @@ async def get_user(
 ):
     db = get_db()
 
-    u = await db.users.find_one({"empId": emp_id})
+    u = await db.users.find_one(
+        {"empId": emp_id}
+    )
 
     if not u:
         raise HTTPException(
@@ -80,8 +88,11 @@ async def get_user(
 
 
 # ============================================================
-# CREATE USER
+# CREATE NEW USER
 # ADMIN ONLY
+#
+# Mobile number is COMPULSORY.
+# Mobile number must also be UNIQUE.
 # ============================================================
 
 @router.post(
@@ -96,10 +107,45 @@ async def add_user(
     db = get_db()
 
     # --------------------------------------------------------
-    # Check duplicate email
+    # Clean input
     # --------------------------------------------------------
 
     email = body.email.lower().strip()
+    emp_id = body.empId.strip()
+
+    mobile = getattr(body, "mobile", None)
+
+    # --------------------------------------------------------
+    # Mobile number is compulsory
+    # --------------------------------------------------------
+
+    if mobile is None or not str(mobile).strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Mobile number is required",
+        )
+
+    mobile = str(mobile).strip()
+
+    # --------------------------------------------------------
+    # Basic mobile validation
+    # --------------------------------------------------------
+
+    if not mobile.isdigit():
+        raise HTTPException(
+            status_code=400,
+            detail="Mobile number must contain only digits",
+        )
+
+    if len(mobile) != 10:
+        raise HTTPException(
+            status_code=400,
+            detail="Mobile number must be exactly 10 digits",
+        )
+
+    # --------------------------------------------------------
+    # Check duplicate email
+    # --------------------------------------------------------
 
     existing_email = await db.users.find_one(
         {"email": email}
@@ -115,8 +161,6 @@ async def add_user(
     # Check duplicate employee ID
     # --------------------------------------------------------
 
-    emp_id = body.empId.strip()
-
     existing_emp_id = await db.users.find_one(
         {"empId": emp_id}
     )
@@ -128,12 +172,24 @@ async def add_user(
         )
 
     # --------------------------------------------------------
-    # Build user document
+    # Check duplicate mobile
+    # --------------------------------------------------------
+
+    existing_mobile = await db.users.find_one(
+        {"mobile": mobile}
+    )
+
+    if existing_mobile:
+        raise HTTPException(
+            status_code=400,
+            detail="This mobile number is already in use",
+        )
+
+    # --------------------------------------------------------
+    # Create MongoDB document
     #
-    # IMPORTANT:
-    # Do NOT store mobile=None.
-    # MongoDB has a unique mobile index and multiple null
-    # values cause DuplicateKeyError.
+    # We explicitly add mobile here so it can NEVER become
+    # null accidentally.
     # --------------------------------------------------------
 
     data = body.model_dump(
@@ -144,35 +200,13 @@ async def add_user(
         **data,
         "empId": emp_id,
         "email": email,
+        "mobile": mobile,
         "passwordHash": hash_password(body.password),
         "status": "Active",
     }
 
     # --------------------------------------------------------
-    # Add mobile ONLY if provided
-    # --------------------------------------------------------
-
-    mobile = getattr(body, "mobile", None)
-
-    if mobile:
-        mobile = mobile.strip()
-
-        if mobile:
-            # Optional early duplicate check
-            existing_mobile = await db.users.find_one(
-                {"mobile": mobile}
-            )
-
-            if existing_mobile:
-                raise HTTPException(
-                    status_code=400,
-                    detail="This mobile number is already in use",
-                )
-
-            doc["mobile"] = mobile
-
-    # --------------------------------------------------------
-    # Insert user
+    # Insert into MongoDB
     # --------------------------------------------------------
 
     try:
@@ -181,18 +215,21 @@ async def add_user(
     except DuplicateKeyError as e:
         error = str(e)
 
+        # MongoDB unique mobile index
         if "mobile" in error:
             raise HTTPException(
                 status_code=409,
                 detail="This mobile number is already in use",
             )
 
+        # MongoDB unique email index
         if "email" in error:
             raise HTTPException(
                 status_code=409,
                 detail="This email is already in use",
             )
 
+        # MongoDB unique employee ID index
         if "empId" in error:
             raise HTTPException(
                 status_code=409,
@@ -210,16 +247,18 @@ async def add_user(
 # ============================================================
 # UPDATE USER PROFILE
 #
-# User can edit their own:
-# - name
-# - phone
-# - branch
+# User can edit their own profile.
 #
-# Admin can edit anyone.
+# User can change:
+#   - name
+#   - phone
+#   - branch
+#
+# Admin can edit any user.
 #
 # Only admin can change:
-# - role
-# - status
+#   - role
+#   - status
 # ============================================================
 
 @router.patch(
@@ -247,13 +286,15 @@ async def update_user(
         )
 
     # --------------------------------------------------------
-    # Build update data
+    # Create update object
     # --------------------------------------------------------
 
     patch = {
-        k: v
-        for k, v in body.model_dump(exclude_unset=True).items()
-        if v is not None
+        key: value
+        for key, value in body.model_dump(
+            exclude_unset=True
+        ).items()
+        if value is not None
     }
 
     # --------------------------------------------------------
@@ -261,7 +302,8 @@ async def update_user(
     # --------------------------------------------------------
 
     if not is_admin and (
-        "role" in patch or "status" in patch
+        "role" in patch or
+        "status" in patch
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -269,7 +311,7 @@ async def update_user(
         )
 
     # --------------------------------------------------------
-    # Check user exists
+    # Find user
     # --------------------------------------------------------
 
     u = await db.users.find_one(
@@ -309,6 +351,12 @@ async def update_user(
                     detail="This email is already in use",
                 )
 
+            if "empId" in error:
+                raise HTTPException(
+                    status_code=409,
+                    detail="This employee ID is already in use",
+                )
+
             raise HTTPException(
                 status_code=409,
                 detail="This information is already in use",
@@ -318,7 +366,7 @@ async def update_user(
 
 
 # ============================================================
-# CHANGE PASSWORD
+# CHANGE USER PASSWORD
 # ADMIN ONLY
 #
 # Admin can change password for any account,
@@ -371,7 +419,7 @@ async def delete_user(
     admin: dict = Depends(require_admin),
 ):
     # --------------------------------------------------------
-    # Prevent admin from deleting their own account
+    # Admin cannot delete their own account
     # --------------------------------------------------------
 
     if admin["empId"] == emp_id:
