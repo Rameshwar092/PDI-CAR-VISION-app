@@ -11,7 +11,8 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 # ============================================================
-# HELPER: Convert MongoDB user document to API response
+# HELPER
+# Convert MongoDB user document to API response
 # ============================================================
 
 def _out(u: dict) -> UserOut:
@@ -91,8 +92,9 @@ async def get_user(
 # CREATE NEW USER
 # ADMIN ONLY
 #
-# Mobile number is COMPULSORY.
-# Mobile number must also be UNIQUE.
+# Phone number is compulsory.
+# Phone number must be exactly 10 digits.
+# Phone number must be unique.
 # ============================================================
 
 @router.post(
@@ -110,37 +112,52 @@ async def add_user(
     # Clean input
     # --------------------------------------------------------
 
+    name = body.name.strip()
     email = body.email.lower().strip()
     emp_id = body.empId.strip()
-
-    mobile = getattr(body, "mobile", None)
+    phone = str(body.phone).strip()
+    branch = body.branch.strip()
 
     # --------------------------------------------------------
-    # Mobile number is compulsory
+    # Validate name
     # --------------------------------------------------------
 
-    if mobile is None or not str(mobile).strip():
+    if not name:
         raise HTTPException(
             status_code=400,
-            detail="Mobile number is required",
+            detail="Name is required",
         )
 
-    mobile = str(mobile).strip()
-
     # --------------------------------------------------------
-    # Basic mobile validation
+    # Validate employee ID
     # --------------------------------------------------------
 
-    if not mobile.isdigit():
+    if not emp_id:
         raise HTTPException(
             status_code=400,
-            detail="Mobile number must contain only digits",
+            detail="Employee ID is required",
         )
 
-    if len(mobile) != 10:
+    # --------------------------------------------------------
+    # Validate phone
+    # --------------------------------------------------------
+
+    if not phone or phone == "-":
         raise HTTPException(
             status_code=400,
-            detail="Mobile number must be exactly 10 digits",
+            detail="Phone number is required",
+        )
+
+    if not phone.isdigit():
+        raise HTTPException(
+            status_code=400,
+            detail="Phone number must contain only digits",
+        )
+
+    if len(phone) != 10:
+        raise HTTPException(
+            status_code=400,
+            detail="Phone number must be exactly 10 digits",
         )
 
     # --------------------------------------------------------
@@ -172,35 +189,33 @@ async def add_user(
         )
 
     # --------------------------------------------------------
-    # Check duplicate mobile
+    # Check duplicate phone
     # --------------------------------------------------------
 
-    existing_mobile = await db.users.find_one(
-        {"mobile": mobile}
+    existing_phone = await db.users.find_one(
+        {"phone": phone}
     )
 
-    if existing_mobile:
+    if existing_phone:
         raise HTTPException(
             status_code=400,
-            detail="This mobile number is already in use",
+            detail="This phone number is already in use",
         )
 
     # --------------------------------------------------------
     # Create MongoDB document
     #
-    # We explicitly add mobile here so it can NEVER become
-    # null accidentally.
+    # IMPORTANT:
+    # We use "phone", NOT "mobile".
     # --------------------------------------------------------
 
-    data = body.model_dump(
-        exclude={"password", "mobile"}
-    )
-
     doc = {
-        **data,
-        "empId": emp_id,
+        "name": name,
         "email": email,
-        "mobile": mobile,
+        "empId": emp_id,
+        "phone": phone,
+        "branch": branch,
+        "role": body.role,
         "passwordHash": hash_password(body.password),
         "status": "Active",
     }
@@ -215,21 +230,18 @@ async def add_user(
     except DuplicateKeyError as e:
         error = str(e)
 
-        # MongoDB unique mobile index
-        if "mobile" in error:
+        if "phone" in error:
             raise HTTPException(
                 status_code=409,
-                detail="This mobile number is already in use",
+                detail="This phone number is already in use",
             )
 
-        # MongoDB unique email index
         if "email" in error:
             raise HTTPException(
                 status_code=409,
                 detail="This email is already in use",
             )
 
-        # MongoDB unique employee ID index
         if "empId" in error:
             raise HTTPException(
                 status_code=409,
@@ -247,9 +259,7 @@ async def add_user(
 # ============================================================
 # UPDATE USER PROFILE
 #
-# User can edit their own profile.
-#
-# User can change:
+# User can edit their own:
 #   - name
 #   - phone
 #   - branch
@@ -286,7 +296,7 @@ async def update_user(
         )
 
     # --------------------------------------------------------
-    # Create update object
+    # Build update object
     # --------------------------------------------------------
 
     patch = {
@@ -309,6 +319,47 @@ async def update_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only an admin can change role or status",
         )
+
+    # --------------------------------------------------------
+    # Validate phone if phone is being changed
+    # --------------------------------------------------------
+
+    if "phone" in patch:
+        phone = str(patch["phone"]).strip()
+
+        if not phone or phone == "-":
+            raise HTTPException(
+                status_code=400,
+                detail="Phone number is required",
+            )
+
+        if not phone.isdigit():
+            raise HTTPException(
+                status_code=400,
+                detail="Phone number must contain only digits",
+            )
+
+        if len(phone) != 10:
+            raise HTTPException(
+                status_code=400,
+                detail="Phone number must be exactly 10 digits",
+            )
+
+        # Check whether another user already has this phone
+        existing_phone = await db.users.find_one(
+            {
+                "phone": phone,
+                "empId": {"$ne": emp_id},
+            }
+        )
+
+        if existing_phone:
+            raise HTTPException(
+                status_code=400,
+                detail="This phone number is already in use",
+            )
+
+        patch["phone"] = phone
 
     # --------------------------------------------------------
     # Find user
@@ -339,10 +390,10 @@ async def update_user(
         except DuplicateKeyError as e:
             error = str(e)
 
-            if "mobile" in error:
+            if "phone" in error:
                 raise HTTPException(
                     status_code=409,
-                    detail="This mobile number is already in use",
+                    detail="This phone number is already in use",
                 )
 
             if "email" in error:
