@@ -18,8 +18,17 @@ export default function Users() {
 
   const create = async e => {
     e.preventDefault()
-    if (!f.name.trim() || !f.empId.trim()) return setErr('Name and employee ID are required')
-    if (!/^\S+@\S+\.\S+$/.test(f.email)) return setErr('Enter a valid email address')
+    if (!f.name.trim() || !f.empId.trim())
+  return setErr('Name and employee ID are required')
+
+if (!/^\S+@\S+\.\S+$/.test(f.email))
+  return setErr('Enter a valid email address')
+
+if (!f.phone.trim())
+  return setErr('Phone number is required')
+
+if (!/^\d{10}$/.test(f.phone.trim()))
+  return setErr('Phone number must be exactly 10 digits')
     try {
       const created = await addUser(f)
       toast(created.tempPassword ? `${f.name} added — temp password: ${created.tempPassword}` : `${f.name} added`)
