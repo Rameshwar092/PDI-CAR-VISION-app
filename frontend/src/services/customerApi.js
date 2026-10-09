@@ -14,6 +14,21 @@ const store = {
   clear: () => { try { sessionStorage.removeItem(TOKEN) } catch { /* ignore */ } },
 }
 export const hasCustomerSession = () => !!store.get()
+
+// The pdicarvision.in website logs the customer in (Firebase OTP), gets a customer
+// token from our backend, and opens /get-report/<id>#t=<token>. The token is in the
+// #fragment so it is never sent to any server or written to server logs.
+export function adoptHandoffToken() {
+  const m = /[#&]t=([\w.-]+)/.exec(window.location.hash || '')
+  if (!m) return false
+  store.set(m[1])
+  window.history.replaceState(null, '', window.location.pathname + window.location.search)
+  return true
+}
+
+// If set, /get-report sends people without a session to the website's login instead
+// of this page's own OTP form (e.g. VITE_CUSTOMER_LOGIN_URL=https://pdicarvision.in/#get-report).
+export const CUSTOMER_LOGIN_URL = import.meta.env.VITE_CUSTOMER_LOGIN_URL || ''
 export const customerLogout = () => store.clear()
 
 export const cleanMobile = raw => {

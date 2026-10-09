@@ -5,7 +5,7 @@ import ReportView from '../../components/ReportView.jsx'
 import { USE_MOCK } from '../../services/api.js'
 import {
   requestOtp, verifyOtp, getMyReports, getMyReport, hasCustomerSession, customerLogout,
-  cleanMobile, isValidMobile, DEMO_OTP, DEMO_MOBILE,
+  cleanMobile, isValidMobile, DEMO_OTP, DEMO_MOBILE, adoptHandoffToken, CUSTOMER_LOGIN_URL,
 } from '../../services/customerApi.js'
 
 const tone = { PASS: 'green', 'PASS WITH OBSERVATIONS': 'amber', FAIL: 'red' }
@@ -23,6 +23,7 @@ function Shell({ children, onLogout }) {
 
 /** /get-report : mobile -> OTP -> list of the customer's reports */
 export default function GetReport() {
+  adoptHandoffToken()
   const nav = useNavigate(), [params] = useSearchParams()
   const [step, setStep] = useState(hasCustomerSession() ? 'list' : 'mobile')
   const [mobile, setMobile] = useState(cleanMobile(params.get('mobile') || ''))
@@ -62,6 +63,11 @@ export default function GetReport() {
   }
 
   const logout = () => { customerLogout(); setReports(null); setOtp(''); setMsg(''); setErr(''); setStep('mobile') }
+
+  if (step === 'mobile' && CUSTOMER_LOGIN_URL) {
+    window.location.replace(CUSTOMER_LOGIN_URL)
+    return <Shell><p className="muted" style={{ textAlign: 'center' }}>Taking you to the login page...</p></Shell>
+  }
 
   if (step === 'list') {
     return (<Shell onLogout={logout}>
@@ -113,6 +119,7 @@ export default function GetReport() {
 
 /** /get-report/:id : one report, only after OTP */
 export function CustomerReport() {
+  adoptHandoffToken()
   const nav = useNavigate()
   if (!hasCustomerSession()) return <Navigate to="/get-report" replace />
   const logout = () => { customerLogout(); nav('/get-report') }

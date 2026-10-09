@@ -33,6 +33,12 @@ class Settings(BaseSettings):
     otp_max_per_hour: int = 5          # OTPs per mobile number per hour
     customer_token_minutes: int = 30   # how long the customer stays signed in after OTP
 
+    # Firebase project id of the pdicarvision.in website. When set, customers who
+    # verified their phone with Firebase Phone Auth on the website can open their
+    # reports without a second OTP (POST /api/customer/firebase-login).
+    firebase_project_id: str = ""
+    firebase_max_login_age_minutes: int = 15   # the Firebase OTP must be this recent
+
     # SMS provider: console | msg91 | fast2sms | twilio  (see app/services/sms.py)
     sms_provider: str = "console"
     msg91_auth_key: str = ""

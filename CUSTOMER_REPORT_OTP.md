@@ -1,5 +1,14 @@
 # Customer "Get your PDI report" (OTP)
 
+> **Using the pdicarvision.in website login (recommended):** the website already sends the OTP with
+> Firebase Phone Auth. Set `FIREBASE_PROJECT_ID` (same as the website's `VITE_FIREBASE_PROJECT_ID`) in this
+> backend's `.env` and add `https://pdicarvision.in` to `CORS_ORIGINS`. The website then calls
+> `POST /api/customer/firebase-login` and opens reports here at `/get-report/<id>`, already signed in.
+> No MSG91/Fast2SMS setup is needed for that path. Optional: set `VITE_CUSTOMER_LOGIN_URL=https://pdicarvision.in/#get-report`
+> in the PDI web app so `/get-report` sends people to the website login instead of its own OTP form.
+>
+> The rest of this page describes the built-in SMS OTP page, which you can keep as a backup.
+
 Customers open **`https://<your-pdi-app-domain>/get-report`**, enter the mobile
 number given at the time of inspection, receive a 6-digit OTP by SMS, and then
 see / download / print their own submitted PDI reports.

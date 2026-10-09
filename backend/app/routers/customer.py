@@ -27,6 +27,7 @@ from ..schemas.pdi import ReportOut
 from ..security import create_access_token
 from ..services.phone import normalize_mobile, mask_mobile
 from ..services.sms import send_otp_sms, SMSError
+from ..services.firebase_auth import verify_firebase_phone_token, FirebaseTokenError
 
 router = APIRouter(prefix="/customer", tags=["customer"])
 logger = logging.getLogger("pdi_car_vision.customer")
@@ -136,10 +137,41 @@ async def verify_otp(body: OtpVerify):
                             "Too many wrong attempts. Please request a new OTP.")
 
     await db.otps.update_one({"_id": mobile}, {"$unset": {"hash": "", "expiresAt": "", "attempts": ""}})
+    return _customer_session(mobile)
+
+
+def _customer_session(mobile: str) -> dict:
     token = create_access_token({"sub": f"customer:{mobile}", "typ": "customer", "mobile": mobile},
                                 expires_minutes=settings.customer_token_minutes)
     return {"access_token": token, "token_type": "bearer", "mobile": mask_mobile(mobile),
             "expiresIn": settings.customer_token_minutes * 60}
+
+
+class FirebaseLogin(BaseModel):
+    idToken: str = Field(min_length=20, max_length=5000)
+
+
+@router.post("/firebase-login")
+async def firebase_login(body: FirebaseLogin, request: Request):
+    """The pdicarvision.in website already verifies the customer's phone with
+    Firebase Phone Auth (its own OTP). It sends us the Firebase ID token, we check
+    Google's signature and read the verified phone number from it."""
+    _check_ip(request)
+    try:
+        phone = await verify_firebase_phone_token(body.idToken)
+    except FirebaseTokenError as e:
+        logger.warning("Firebase login rejected: %s", e)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Could not verify your login. Please verify your mobile number again.")
+    mobile = normalize_mobile(phone)
+    if not mobile:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Only Indian mobile numbers are supported.")
+    try:
+        claims = jwt.get_unverified_claims(body.idToken)  # signature already checked above
+    except JWTError:
+        claims = {}
+    if time.time() - claims.get("auth_time", 0) > settings.firebase_max_login_age_minutes * 60:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Your login is too old. Please verify your mobile number again.")
+    return _customer_session(mobile)
 
 
 async def get_current_customer(token: str = Depends(_bearer)) -> str:
