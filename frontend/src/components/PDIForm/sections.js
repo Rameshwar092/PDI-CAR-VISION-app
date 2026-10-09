@@ -1,12 +1,3 @@
-// ===================================================================
-// PDI checklist schema — transcribed from the handwritten application spec.
-// Each checklist item stores an ARRAY of selected options (multi-select),
-// so the inspector can tick more than one fault on the same item.
-// The option at index 0 of each list is the "all ok / normal" state used
-// to compute section status and flagged items.
-// To change wording or add/remove a check, edit this file only — the
-// wizard, the report view and validation all read from it.
-// ===================================================================
 
 export const BRANDS = ['Maruti Suzuki', 'Hyundai', 'Tata', 'Mahindra', 'Kia', 'Toyota', 'Honda',
   'Renault', 'Nissan', 'Skoda', 'Volkswagen', 'MG', 'Jeep', 'Citroen', 'Other']
@@ -31,7 +22,7 @@ export const BASIC_DETAILS = [
 const EXTERIOR_PANEL = ['All OK', 'Scratches', 'Hairline Marks', 'Rusting', 'Dent', 'Cracks', 'Color Mismatch',
   'Loose or Misaligned', 'Clipping', 'Broken Clips or Mounts', 'Panel Changed', 'Re-Painted', 'Paint Bubble',
   'Pin Holes', 'Partially Repainted', 'Hinges Tampered', 'Other (Specify)']
-const PANEL_GAP = ['All OK', 'Not Smooth', 'Minor Panel Gap', 'Major Panel Gap', 'Manufacturing Issue', 'Improper Alignment']
+const PANEL_GAP = ['All OK', 'Not ok', 'Smooth','Minor Panel Gap', 'Major Panel Gap', 'Manufacturing Issue', 'Improper Alignment']
 const SEAL = ['All OK', 'Cracks', 'Cuts', 'Damage', 'Other (Specify)']
 const TYRE_MFG = ['MRF', 'Apollo', 'CEAT', 'JK Tyre', 'Bridgestone', 'Goodyear', 'Pirelli', 'Michelin', 'Yokohama', 'Continental', 'Other (Specify)']
 const TYRE_COND = ['All OK', 'Cut or Tear', 'Puncture', 'Bulges or Bubbles', 'Cracks', 'Other (Specify)']
@@ -39,13 +30,13 @@ const WHEEL_COND = ['All OK', 'Scratches or Scuffs', 'Dent or Bends', 'Cracks', 
 const WINDSHIELD = ['No Fault Detected', 'Scratched Present', 'Wiper Marks Visible', 'Chipping Observed', 'Cracks Detected', 'Bubbles on Glass', 'Sealing Issue Noted', 'Other (Specify)']
 const ORVM = ['No Fault Detected', 'Scratches', 'Cracks Detected', 'Damage', 'Noise Issue', 'Other (Specify)']
 const GLASS_PANEL = ['No Fault Detected', 'Not Available', 'Scratches', 'Chipping Observed', 'Cracks Detected', 'Damage', 'Unusually Noisy', 'Glass Shattering', 'Bubbles on Glass', 'Other (Specify)']
-const LIGHT_MAIN = ['Working Perfectly', 'Bulb Fuse', 'Moisture on Lights', 'One Headlight Not Working', 'Damage', 'Cracks on Light', 'Scratches', 'Other (Specify)']
-const FOG_LAMP = ['Working Perfectly', 'Not Available', 'Moisture on Lights', 'One Fog Lamp Not Working', 'Damage', 'Cracks on Light', 'Scratches', 'Other (Specify)']
-const BLINKERS = ['Working Perfectly', 'Not Available', 'Bulb Fuse', 'Cracks on Light', 'Damage', 'Scratches',
+const LIGHT_MAIN = ['Working Perfectly', 'Bulb Fuse', 'Moisture on Lights', 'One Headlight Not Working', 'Both Headlights are working','Damage', 'Cracks on Light', 'Scratches', 'Other (Specify)']
+const FOG_LAMP = ['Working Perfectly', 'Not Available', 'Moisture on Lights', 'One Fog Lamp Not Working', 'Both fog lamp are working','Damage', 'Cracks on Light', 'Scratches', 'Other (Specify)']
+const BLINKERS = ['Working Perfectly', 'Bulb Fuse', 'Cracks on Light', 'Damage', 'Scratches',
   'Fast Blinking', 'Hazard Lighting Not Working', 'Turn Signal Not Working', 'Other (Specify)']
-const TAIL_LAMP = ['Working Perfectly', 'Bulb Fuse', 'Moisture on Lights', 'One Tail Light Not Working', 'Damage', 'Cracks on Light', 'Scratches', 'Other (Specify)']
-const OBD_MONITOR = ['Monitor OK', 'Fault Detected', 'Not Applicable', 'Other (Specify)']
-const DOC_ITEM = ['Available', 'Not Available', 'Not Applicable', 'Other (Specify)']
+const TAIL_LAMP = ['Working Perfectly', 'Bulb Fuse', 'Moisture on Lights', 'One Tail Light Not Working', 'Damage', 'Both Tail Lights are working','Cracks on Light Scratches', 'Other (Specify)']
+const OBD_MONITOR = ['All OK','Not ok', 'Other (Specify)']
+const DOC_ITEM = ['To be checked by owner', 'To be checked by PDI Expert']
 
 export const SECTIONS = [
   { key: 'exterior', title: 'Exterior Paint and Finish Inspection', hasRemarks: true, items: [
@@ -80,7 +71,7 @@ export const SECTIONS = [
     ['Sunroof', GLASS_PANEL] ] },
 
   { key: 'underbody', title: 'Underbody and Chassis Checks', hasRemarks: true, items: [
-    ['Underbody Shield Damage', ['All OK', 'Bent', 'Damaged', 'Other (Specify)']],
+    ['Underbody Shield Damage', ['All OK', 'Dent', 'Damaged', 'Other (Specify)']],
     ['Underbody Rusting', ['All OK', 'Rust Found', 'Other (Specify)']],
     ['Underbody Checks', ['All OK', 'Leakage Found', 'Surface Rust', 'Unusual Noise', 'Other (Specify)']],
     ['Suspension System Checks', ['All OK', 'Leakage', 'Surface Rust', 'Unusual Noise', 'Other (Specify)']],
@@ -88,14 +79,13 @@ export const SECTIONS = [
     ['Chassis & Frame', ['All OK', 'Leakage', 'Surface Rust', 'Unusual Noise', 'Other (Specify)']] ] },
 
   { key: 'hood', title: 'Under the Hood Checks', hasRemarks: true, items: [
-    ['Battery Voltage', ['Good', 'Normal', 'Poor']],
-    ['Battery Condition', ['All OK', 'Loose Battery Cable', 'Faulty Alternator', 'Corroded Terminals', 'Rigidine Found While Terminals', 'Other (Specify)']],
-    ['Brake Oil', ['Normal', 'Low', 'Other (Specify)']],
-    ['Coolant', ['Normal', 'Low / Insufficient', 'Leakage', 'Other (Specify)']],
+    ['Battery Voltage', ['Good', 'Normal', 'Poor', 'Loose Battery cable','Faulty Alternator', 'White & Blue Residue around Terminal', 'Other (Specify)']],
+    ['Brake Oil', ['Normal', 'Low', 'Sufficient','Leakage','Other (Specify)']],
+    ['Coolant', ['Normal', 'Low','Sufficient', 'Leakage', 'Other (Specify)']],
     ['Engine Oil', ['Normal', 'Leakage', 'Other (Specify)']],
-    ['Auxiliary Belt', ['NA', 'Normal', 'Cracks', 'Needs to be Changed', 'Other (Specify)']],
-    ['Washer Fluid', ['Not Available', 'Normal', 'Leakage', 'Water Bottle Damaged', 'Clogged Nozzle', 'Other (Specify)']],
-    ['Leakage (Differential / Axle / Shocker)', ['No Leakage', 'Differential or Axle Oil Leak', 'Sign of Shocker Leakage', 'Other (Specify)']] ] },
+    ['Auxiliary Belt', ['NA', 'Normal', 'Cracks', 'Needs to be Changed', 'Ok','Other (Specify)']],
+    ['Washer Fluid', ['Not Available', 'Available', 'Leakage', 'Water Bottle Damaged', 'Clogged Washer Nozzles', 'Other (Specify)']],
+    ['Leakage', ['No Leakage', 'Differential or Axle Oil Leak', 'Sign of Shocker Leakage', 'Other (Specify)']] ] },
 
   { key: 'interior', title: 'Interior Inspection - Comfort and Function', hasRemarks: true, items: [
     ['Seats and Upholstery', ['All OK', 'Cracks', 'Cut', 'Stains', 'Leather Peeling', 'Loose or Leather Wrinkles',
@@ -104,7 +94,7 @@ export const SECTIONS = [
     ['Seat Belts', ['All Sensors are Working', 'Seat Belt Not Retracting Smoothly', 'Seat Belt Sticking or Locking',
       'Seat Belt Damage', 'Seat Belt Warning Light Stays On', 'Seat Belt Lock Issue', 'Other (Specify)']],
     ['Dashboard', ['All OK', 'Scratches or Scuff Marks', 'Uneven Gap and Loose Fitting', 'Adhesive Marks',
-      'Switches Not Working', 'Vibration / Noise', 'Other (Specify)']],
+      'Switches Not Working', 'Vibration', 'Noise', 'Other (Specify)']],
     ['Infotainment System', ['Working Perfectly', 'Not Applicable', 'Display Issue', 'Speakers Not Working',
       'Bluetooth Issue', 'Scratches on Screen', 'Hairline Scratches', 'Connectivity Issue', 'Other (Specify)']],
     ['Air Conditioning / Climate Control', ['All Vents Working Perfectly', 'Clogged Air Vents', 'Noise',
@@ -114,17 +104,18 @@ export const SECTIONS = [
     ['Ambient Light', ['Not Applicable', 'Working Perfectly', 'Not Working', 'Other (Specify)']],
     ['Floor Mats', ['All OK', 'Wear and Tear Found', 'Dirt Marks', 'Unpleasant Odor', 'Uneven Fitment', 'Other (Specify)']],
     ['Power Windows & Sunroof', ['All Switches are OK', 'Not Available', 'One Touch Window Not Working',
-      'Switches Not OK', 'Window Lock Issue', 'Faulty Switches', 'Faulty Sunroof Motor', 'Broken or Stuck Mechanism', 'Other (Specify)']],
+      'Switches are not working', 'Window Lock Issue', 'Faulty Switches', 'Faulty Sunroof Motor', 'Broken or Stuck Mechanism', 'Broken Window Regulator','Other (Specify)']],
+
     ['Storage Compartments', ['All OK', 'Damaged Hinges', 'Faulty Locks', 'Compartment Not Closing Properly',
       'Interior Lining or Padding Damage', 'Other (Specify)']],
     ['Instrument Cluster', ['No Warning Light Shown', 'Warning Light Stays On or Flashes', 'Incorrect Reading', 'On & Off Problem', 'Other (Specify)']],
     ['Headliner (Roof)', ['Neat and Clean', 'Dirt Stain', 'Damage', 'Not Properly Aligned', 'Tears or Rips', 'Loose or Detaching Edges', 'Other (Specify)']],
     ['All Door Controls', ['All Door Controls Work', 'Issue Found', 'Broken Switches', 'Loose Switches', 'Faulty Power Door Lock Relay', 'Central Locking System Issue',
-      'Auto Door Lock Faulty', 'Child Safety Issue', 'ORVM Control Not Working', 'Other (Specify)']],
-    ['Wireless Charging', ['Working Perfectly', 'Not Available', 'Other (Specify)']],
-    ['Charging Ports / USB', ['All OK', 'Not Working', 'Other (Specify)']],
-    ['IRVM and Vanity Mirror', ['All OK', 'Not Working', 'Vanity Mirror Issue', 'Damage', 'Loose', 'Vanity Mirror Broken', 'Light Not Working', 'Other (Specify)']],
-    ['Gear Console Functions', ['All OK', 'Not Working', 'Scratches', 'Issue Found', 'Driving Modes Not Working', 'Hinges Broken / Loose', 'Damage', 'Panel Gaps', 'Other (Specify)']],
+      'Auto Door Lock issue', 'Child Safety Issue', 'ORVM Control Not Working', 'Other (Specify)']],
+    ['Wireless Charging', ['Working Perfectly', 'Not Available', 'Not working','Other (Specify)']],
+    ['Charging Ports', ['Not Working', 'Working perfectly','Not available','Other (Specify)']],
+    ['IRVM and Vanity Mirror', ['All OK','Not applicable' ,'Not Working', 'Vanity Mirror Issue', 'Damage', 'Loose', 'Vanity Mirror Broken', 'Light Not Working', 'Other (Specify)']],
+    ['Gear Console Functions', ['All OK', 'Scratches', 'Issue Found', 'Driving Modes Not Working', 'Hinges Broken / Loose', 'Damage', 'Panel Gaps', 'Other (Specify)']],
     ['Boot Carpet', ['All OK', 'Wear & Tear Found', 'Dirt Marks', 'Unpleasant Odor', 'Uneven Fitment', 'Other (Specify)']],
     ['Parcel Tray', ['All OK', 'Not Available', 'Thread Missing', 'Latch Issue', 'Stain Marks', 'Hinges Broken', 'Broken', 'Other (Specify)']],
     ['Armrest Controls', ['All OK', 'Not Available', 'Armrest Adjustment Not Working', 'Broken', 'Panel Gap', 'Armrest Controls Not Responding', 'Armrest Noise When Moving', 'Other (Specify)']] ] },
@@ -132,7 +123,7 @@ export const SECTIONS = [
   { key: 'mechanical', title: 'Mechanical and Performance Inspection', hasRemarks: true, items: [
     ['Ignition', ['Working Perfectly', 'Long Self', 'Other (Specify)']],
     ['Exhaust System', ['No Issue Detected', 'Rusting Issue', 'Exhaust Pipe Damage', 'Grey Smoke', 'White Smoke', 'Black Smoke', 'Blue Smoke', 'Other (Specify)']],
-    ['Clutch Operation', ['Working OK', 'Slipping Issue', 'Hard Clutch / Noise in Clutch', 'Other (Specify)']],
+    ['Clutch Operation', ['Working OK', 'Hard Clutch', 'Noise in Clutch', 'Other (Specify)']],
     ['Steering System', ['Working OK', 'Hard', 'Additional Noise', 'Adjustment Issue', 'Other (Specify)']],
     ['Transmission', ['All OK', 'Gear Shifting Issue', 'Hard Gear Shifting', 'Issue with 4x4', 'Other (Specify)']],
     ['Suspension System', ['All OK', 'Unusual Noise', 'Other (Specify)']],
@@ -144,17 +135,39 @@ export const SECTIONS = [
     ['Error Code / Fault Deduction', ['Engine Code Not Found', 'Engine Code Found', 'Other (Specify)']],
     ['Sensor Status & Reading', ['All OK', 'Not OK', 'Other (Specify)']],
     ['ECU Health (Overall)', ['All OK', 'Not OK', 'Other (Specify)']],
-    ['Catalyst Monitor', OBD_MONITOR], ['Misfire Monitor', OBD_MONITOR], ['Oxygen Sensor Monitor', OBD_MONITOR],
-    ['Oxygen Sensor Heater', OBD_MONITOR], ['EGR System', OBD_MONITOR], ['Heated Catalyst', OBD_MONITOR],
-    ['Sensor Period', OBD_MONITOR], ['Low Sensor Voltage (B1S2)', OBD_MONITOR], ['High Sensor Voltage', OBD_MONITOR],
-    ['Misfire Cylinder (1-6)', OBD_MONITOR], ['Idle RPM', OBD_MONITOR], ['EGR Monitor Bank 1', OBD_MONITOR],
-    ['RPM Load', OBD_MONITOR], ['ABS Load / Transmission / Cylinder Deactivation', OBD_MONITOR],
-    ['Misfire Data Monitor / ECM Output Circuit', OBD_MONITOR], ['Brake & Traction Control', OBD_MONITOR],
+    ['Catalyst Monitor', OBD_MONITOR], 
+    ['Misfire Monitor', OBD_MONITOR], 
+    ['Oxygen Sensor Monitor', OBD_MONITOR],
+    ['Oxygen Sensor Heater', OBD_MONITOR], 
+    ['EGR System', OBD_MONITOR],
+    ['Heated Catalyst', OBD_MONITOR],
+    ['Sensor Period', OBD_MONITOR],
+    ['Low Sensor Voltage (B1S2)', OBD_MONITOR], 
+    ['High Sensor Voltage', OBD_MONITOR],
+    ['Misfire Cylinder1', OBD_MONITOR], 
+    ['Misfire Cylinder2', OBD_MONITOR], 
+    ['Misfire Cylinder3', OBD_MONITOR], 
+    ['Misfire Cylinder4', OBD_MONITOR], 
+    ['Misfire Cylinder5', OBD_MONITOR], 
+    ['Misfire Cylinder6', OBD_MONITOR], 
+
+    ['Idle RPM', OBD_MONITOR], 
+    ['EGR Monitor Bank 1', OBD_MONITOR],
+    ['RPM Load', OBD_MONITOR],
+    ['ABS Load', OBD_MONITOR],
+    ['Transmission', OBD_MONITOR],
+    ['Cylinder Deactivation', OBD_MONITOR],
+
+    ['Misfire Data Monitor', OBD_MONITOR], 
+    ['ECM Output Circuit', OBD_MONITOR],
+    ['Brake & Traction Control', OBD_MONITOR],
     ['Vehicle or Idle Speed Control', OBD_MONITOR],
     ['Chassis Verification', ['Chassis Verified', 'Verified through OBD', 'Other (Specify)']] ] },
 
   { key: 'lights', title: 'Lights Checks', hasRemarks: true, items: [
-    ['Front Light (Headlight)', LIGHT_MAIN], ['Fog Lamp', FOG_LAMP], ['Blinkers (Turn Indicators)', BLINKERS],
+    ['Front Light (Headlight)', LIGHT_MAIN], 
+    ['Fog Lamp', FOG_LAMP],
+     ['Blinkers', BLINKERS],
     ['Rear Tail Lamp', TAIL_LAMP] ] },
 
   { key: 'documents', title: 'Owner Manual and Documents Check', hasRemarks: true, items: [
