@@ -25,6 +25,18 @@ async def ensure_indexes():
     await db.reports.create_index("vin")
     await db.reports.create_index("date")
     await db.reports.create_index("status")
+    await db.reports.create_index([("customerMobile", 1), ("status", 1)])
+    # OTP records delete themselves an hour after the last OTP was sent
+    await db.otps.create_index("purgeAt", expireAfterSeconds=0)
+    await _backfill_customer_mobile(db)
+
+
+async def _backfill_customer_mobile(db):
+    """One-time fill of customerMobile on reports saved before the OTP feature."""
+    from .services.phone import normalize_mobile
+    async for d in db.reports.find({"customerMobile": {"$exists": False}}, {"id": 1, "data.vehicle.customerMobile": 1}):
+        mobile = normalize_mobile(d.get("data", {}).get("vehicle", {}).get("customerMobile"))
+        await db.reports.update_one({"_id": d["_id"]}, {"$set": {"customerMobile": mobile}})
 
 
 async def close_client():

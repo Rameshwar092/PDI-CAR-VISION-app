@@ -25,6 +25,25 @@ class Settings(BaseSettings):
     # if JWT_SECRET still looks like the placeholder — see main.py.
     allow_insecure_secret: bool = False
 
+    # ---- Customer report access (OTP login on the public "Get your PDI report" page)
+    brand_name: str = "PDI Car Vision"
+    otp_expire_minutes: int = 5
+    otp_max_attempts: int = 5          # wrong guesses allowed per OTP
+    otp_resend_seconds: int = 30       # minimum gap between two OTPs to the same number
+    otp_max_per_hour: int = 5          # OTPs per mobile number per hour
+    customer_token_minutes: int = 30   # how long the customer stays signed in after OTP
+
+    # SMS provider: console | msg91 | fast2sms | twilio  (see app/services/sms.py)
+    sms_provider: str = "console"
+    msg91_auth_key: str = ""
+    msg91_otp_template_id: str = ""
+    fast2sms_api_key: str = ""
+    fast2sms_sender_id: str = ""
+    fast2sms_template_id: str = ""
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
+    twilio_from: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
