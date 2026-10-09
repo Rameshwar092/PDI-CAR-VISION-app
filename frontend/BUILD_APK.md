@@ -53,3 +53,14 @@ Android Studio again.
 Change both in `capacitor.config.json` before your first build if you want
 something different — changing it later means reinstalling rather than
 updating on any phone that already has it.
+
+## Download & Print inside the APK (how it works)
+
+- **Download PDF** builds the PDF in the app, saves a copy to
+  `Documents/PDI Reports/` on the phone, and opens the share sheet
+  (Save to Drive / Files, WhatsApp, Gmail…). Code: `src/services/reportExport.js`.
+- **Print** uses a small native plugin (`android/app/src/main/java/com/pdicarvision/app/PrinterPlugin.java`,
+  registered in `MainActivity.java`) because `window.print()` does nothing in an
+  Android WebView. It opens Android's print dialog — pick a printer or "Save as PDF".
+- After changing any web code, always run `npm run build && npx cap sync android`
+  before building the APK, otherwise the APK keeps the old version.

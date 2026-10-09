@@ -20,7 +20,7 @@ function Guard({ role }) {
   const { user } = useAuth(), [open, setOpen] = useState(false)
   if (!user) return <Navigate to="/login" replace />
   if (user.role !== role) return <Navigate to={user.role === 'admin' ? '/admin' : '/user'} replace />
-  return <div className={`shell ${open ? 'menu-open' : ''}`}><Sidebar onNav={() => setOpen(false)} /><div className="scrim" onClick={() => setOpen(false)} />
+  return <div className={`shell ${open ? 'menu-open' : ''}`}><Sidebar open={open} onNav={() => setOpen(false)} />{open && <div className="scrim" onClick={() => setOpen(false)} />}
     <div className="main"><Navbar onMenu={() => setOpen(!open)} /><main className="content"><Outlet /></main></div></div>
 }
 export default function AppRoutes() {

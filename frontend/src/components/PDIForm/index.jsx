@@ -17,7 +17,7 @@ export function validateVehicle(v) {
 export function BasicDetails({ form, set, errors = {} }) {
   return (<section className="card"><h3>Add Basic Details</h3>
     <div className="grid4">{BASIC_DETAILS.map(f => (
-      <label key={f.key}>{f.label} <span className="req">*</span>
+      <label key={f.key}><span>{f.label} <span className="req">*</span></span>
         {f.type === 'select'
           ? <select className={errors[f.key] ? 'invalid' : ''} value={form.vehicle[f.key] || ''}
               onChange={e => set({ ...form, vehicle: { ...form.vehicle, [f.key]: e.target.value } })}>
@@ -32,7 +32,7 @@ export function ChecklistSection({ section, form, set }) {
   return (<section className="card"><div className="between"><h3>{section.title}</h3>
     <StatusBadge value={sectionStatus(form.checks, section.key)} /></div>
     <div className="split">
-      <table className="table"><tbody>{section.items.map(([item, options]) => {
+      <table className="table checklist"><tbody>{section.items.map(([item, options]) => {
         const key = `${section.key}.${item}`, cur = form.checks[key] || []
         const flagged = isFlagged(form.checks, section.key, item)
         return (<tr key={key}><td>{item}</td><td>
@@ -100,7 +100,7 @@ export default function PDIForm({ initial, onSave, onSubmit }) {
     {step === last - 1 && <Photos form={form} set={set} />}
     {step === last && <FinalResult form={form} set={set} />}
 
-    <div className="between">
+    <div className="between form-actions">
       <div className="row">
         <button type="button" className="btn ghost" disabled={step === 0} onClick={() => goto(step - 1)}>Previous</button>
         <button type="button" className="btn ghost" onClick={draft}>Save as Draft</button>
