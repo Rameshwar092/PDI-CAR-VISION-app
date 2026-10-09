@@ -1,17 +1,26 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getReport } from '../services/pdiApi.js'
+import { BASE } from '../services/api.js'
 import StatusBadge from './StatusBadge.jsx'
 import { SECTIONS, sectionStatus, isFlagged } from './PDIForm/sections.js'
 import logo from '../assets/logo.png'
 import { downloadReportPdf, printReport } from '../services/reportExport.js'
 import { toast } from './Toast.jsx'
 
+// Photo URLs are stored as /uploads/... on the backend server, not on the website's own domain.
+const API_ORIGIN = (() => { try { return new URL(BASE, window.location.href).origin } catch { return '' } })()
+const assetUrl = src => (typeof src === 'string' && src.startsWith('/uploads/') ? API_ORIGIN + src : src)
+
 const tone = { PASS: 'green', 'PASS WITH OBSERVATIONS': 'amber', FAIL: 'red' }
 
-export default function ReportView({ back }) {
-  const { id } = useParams(), [r, setR] = useState(null)
-  useEffect(() => { getReport(id).then(setR) }, [id])
+export default function ReportView({ back, backLabel = 'Back to Reports', loader = getReport, onError }) {
+  const { id } = useParams(), [r, setR] = useState(null), [loadErr, setLoadErr] = useState('')
+  useEffect(() => {
+    setR(null); setLoadErr('')
+    loader(id).then(x => x ? setR(x) : setLoadErr('Report not found'))
+      .catch(e => { setLoadErr(e.message || 'Could not load the report'); onError?.(e) })
+  }, [id])
   const [busy, setBusy] = useState('')
   const handleDownloadPDF = async () => {
     const element = document.getElementById('pdi-report-content')
@@ -31,6 +40,7 @@ export default function ReportView({ back }) {
     catch (error) { console.error('Print failed:', error); toast('Unable to open the print dialog.', 'err') }
     finally { setBusy('') }
   }
+  if (loadErr) return <div className="card"><p className="err">{loadErr}</p><Link to={back}>{'\u2190'} {backLabel}</Link></div>
   if (!r) return <p className="muted">Loading report...</p>
   const d = r.data || {}, v = d.vehicle || {}, checks = d.checks || {}, other = d.other || {}
   const findings = []
@@ -39,7 +49,7 @@ export default function ReportView({ back }) {
     const display = vals.map(val => (val === 'Other (Specify)' && other[key]) ? other[key] : val).join(', ')
     findings.push([`${s.title} \u203a ${item}`, display]) } }))
   const row = (k, x) => <div key={k} className="kv"><span>{k}</span><b>{x || '-'}</b></div>
-  return (<><div className="between no-print report-toolbar"><Link to={back}>{'\u2190'} Back to Reports</Link><div className="row">
+  return (<><div className="between no-print report-toolbar"><Link to={back}>{'\u2190'} {backLabel}</Link><div className="row">
     {r.status === 'Draft' && back.startsWith('/user') && <Link className="btn" to={`/user/create/${r.id}`}>Edit Draft</Link>}
     <button className="btn ghost" onClick={handlePrint} disabled={!!busy}>{busy === 'print' ? 'Opening...' : 'Print'}</button>
     <button className="btn" onClick={handleDownloadPDF} disabled={!!busy}>{busy === 'pdf' ? 'Preparing PDF...' : 'Download PDF'}</button></div></div>
@@ -60,7 +70,7 @@ export default function ReportView({ back }) {
       {findings.length > 0 && <><h4>Flagged Items</h4><table className="table"><tbody>
         {findings.map(([k, x]) => <tr key={k}><td>{k}</td><td><span className="badge amber">{x}</span></td></tr>)}</tbody></table></>}
       {Object.keys(d.photos || {}).length > 0 && <><h4>Photos</h4><div className="photos">
-        {Object.entries(d.photos).map(([k, src]) => <figure key={k}><img src={src} alt={k} /><figcaption className="small">{k}</figcaption></figure>)}</div></>}
+        {Object.entries(d.photos).map(([k, src]) => <figure key={k}><img src={assetUrl(src)} alt={k} crossOrigin="anonymous" /><figcaption className="small">{k}</figcaption></figure>)}</div></>}
       <h4>Final Result</h4><div className={`rresult ${tone[r.result] || ''}`}>{r.result === '-' ? 'Not yet submitted' : r.result}</div>
       <div className="rgrid"><section><h4>Inspector Remarks</h4><p>{d.inspectorRemarks || '-'}</p></section>
         <section><h4>Customer Remarks</h4><p>{d.customerRemarks || '-'}</p></section></div>

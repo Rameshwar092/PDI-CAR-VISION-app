@@ -35,7 +35,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     try:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
         emp_id = payload.get("sub")
-        if emp_id is None:
+        if emp_id is None or payload.get("typ") == "customer":  # customer OTP tokens can't use staff APIs
             raise unauthorized
     except JWTError:
         raise unauthorized

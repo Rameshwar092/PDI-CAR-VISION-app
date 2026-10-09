@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from .config import settings, INSECURE_DEFAULT_SECRETS
 from .database import get_db, get_client, ensure_indexes, close_client
 from .security import hash_password
-from .routers import auth, users, pdi
+from .routers import auth, users, pdi, customer
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger("pdi_car_vision")
@@ -40,6 +40,9 @@ async def lifespan(app: FastAPI):
     os.makedirs(settings.upload_dir, exist_ok=True)
     await ensure_indexes()
     await _seed_admin()
+    if settings.sms_provider.lower() == "console":
+        logger.warning("SMS_PROVIDER=console: customer OTPs are only printed in this log, no SMS is sent. "
+                       "Set SMS_PROVIDER (msg91 / fast2sms / twilio) before going live.")
     logger.info("PDI Car Vision API started.")
     yield
     await close_client()
@@ -49,7 +52,7 @@ app = FastAPI(title="PDI Car Vision API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -70,6 +73,7 @@ app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads"
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(pdi.router, prefix="/api")
+app.include_router(customer.router, prefix="/api")
 
 
 @app.get("/api/health")

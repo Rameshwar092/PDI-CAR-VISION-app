@@ -5,6 +5,7 @@ from ..database import get_db
 from ..security import get_current_user
 from ..schemas.pdi import PDISave, ReportOut, ReportSummary, PhotoUploadOut
 from ..services.storage import save_photo
+from ..services.phone import normalize_mobile
 
 router = APIRouter(prefix="/pdi", tags=["pdi"])
 
@@ -69,6 +70,8 @@ async def create_or_update_report(body: PDISave, report_id: str | None = None,
     doc = {
         "vehicle": f"{v.get('brand', '')} {v.get('model', '')}".strip() or "Unknown",
         "vin": v.get("vin", "-"),
+        # Normalised 10-digit number, used by the customer OTP report page
+        "customerMobile": normalize_mobile(v.get("customerMobile")),
         "user": user["name"],
         "branch": user.get("branch", "-"),
         "date": date.today().isoformat(),

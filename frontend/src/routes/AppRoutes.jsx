@@ -16,6 +16,7 @@ import Reports from '../pages/admin/Reports.jsx'
 import Analytics from '../pages/admin/Analytics.jsx'
 import Settings from '../pages/admin/Settings.jsx'
 import ReportDetails from '../pages/admin/ReportDetails.jsx'
+import GetReport, { CustomerReport } from '../pages/customer/GetReport.jsx'
 function Guard({ role }) {
   const { user } = useAuth(), [open, setOpen] = useState(false)
   if (!user) return <Navigate to="/login" replace />
@@ -27,6 +28,9 @@ export default function AppRoutes() {
   const { user } = useAuth()
   return (<Routes>
     <Route path="/login" element={<Login />} />
+    {/* Public customer page: mobile number + OTP -> own PDI report. Link your website's button here. */}
+    <Route path="/get-report" element={<GetReport />} />
+    <Route path="/get-report/:id" element={<CustomerReport />} />
     <Route path="/user" element={<Guard role="user" />}>
       <Route index element={<UDash />} /><Route path="profile" element={<Profile />} /><Route path="create" element={<CreatePDI />} /><Route path="create/:id" element={<CreatePDI />} />
       <Route path="reports" element={<MyReports />} /><Route path="reports/:id" element={<ViewReport />} /></Route>
