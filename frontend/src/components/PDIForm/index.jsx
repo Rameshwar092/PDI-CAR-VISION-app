@@ -4,7 +4,7 @@ import StatusBadge from '../StatusBadge.jsx'
 import SignaturePad from '../SignaturePad.jsx'
 import MultiSelect from '../MultiSelect.jsx'
 import { toast } from '../Toast.jsx'
-import { compressImage } from '../../services/ImageCompress.js'
+import { compressImage } from '../../services/imageCompress.js'
 
 export function validateVehicle(v) {
   const e = {}
