@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { getReport } from '../services/pdiApi.js'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { getReport, deleteReport } from '../services/pdiApi.js'
 import { BASE } from '../services/api.js'
 import StatusBadge from './StatusBadge.jsx'
 import { SECTIONS, sectionStatus, isFlagged } from './PDIForm/sections.js'
@@ -22,6 +22,14 @@ export default function ReportView({ back, backLabel = 'Back to Reports', loader
       .catch(e => { setLoadErr(e.message || 'Could not load the report'); onError?.(e) })
   }, [id])
   const [busy, setBusy] = useState('')
+    const nav = useNavigate()
+  const isAdmin = back.startsWith('/admin')
+  const handleDelete = async () => {
+    if (busy || !window.confirm(`Delete report ${r.id}?\nIts photos will be deleted too. This can't be undone.`)) return
+    setBusy('delete')
+    try { await deleteReport(r.id); toast(`Report ${r.id} deleted`); nav(back) }
+    catch (e) { toast(`Could not delete: ${e.message}`, 'err'); setBusy('') }
+  }
   const handleDownloadPDF = async () => {
     const element = document.getElementById('pdi-report-content')
     if (!element || busy) return
@@ -52,7 +60,8 @@ export default function ReportView({ back, backLabel = 'Back to Reports', loader
   return (<><div className="between no-print report-toolbar"><Link to={back}>{'\u2190'} {backLabel}</Link><div className="row">
     {r.status === 'Draft' && back.startsWith('/user') && <Link className="btn" to={`/user/create/${r.id}`}>Edit Draft</Link>}
     <button className="btn ghost" onClick={handlePrint} disabled={!!busy}>{busy === 'print' ? 'Opening...' : 'Print'}</button>
-    <button className="btn" onClick={handleDownloadPDF} disabled={!!busy}>{busy === 'pdf' ? 'Preparing PDF...' : 'Download PDF'}</button></div></div>
+        <button className="btn" onClick={handleDownloadPDF} disabled={!!busy}>{busy === 'pdf' ? 'Preparing PDF...' : 'Download PDF'}</button>
+    {isAdmin && <button className="btn ghost danger" onClick={handleDelete} disabled={!!busy}>{busy === 'delete' ? 'Deleting...' : 'Delete'}</button>}</div></div>
     <div className="paper report" id="pdi-report-content">
       <div className="rhead"><div className="rbrand"><img src={logo} alt="" width="70" /><div><small>PRE DELIVERY INSPECTION</small></div></div>
         <div className="rmeta"><h2>PDI INSPECTION REPORT</h2><div>Report No: <b>{r.id}</b></div><div>Date: {r.date}</div><div>Inspector: {r.user}</div></div></div>

@@ -18,6 +18,7 @@ that needs to change: keep the same save_photo(report_id, label, upload)
 """
 import os
 import re
+import shutil
 from datetime import datetime, timezone
 
 from bson import Binary
@@ -97,3 +98,11 @@ async def save_photo(report_id: str, label: str, upload: UploadFile) -> str:
 async def load_photo(report_id: str, filename: str) -> dict | None:
     """Mongo mode: return {'data': bytes, 'contentType': str} or None."""
     return await get_db().photos.find_one({"_id": f"{report_id}/{filename}"})
+
+
+async def delete_report_photos(report_id: str) -> None:
+    """Remove every photo of a report (both storage modes)."""
+    await get_db().photos.delete_many({"reportId": report_id})
+    folder = os.path.join(config.settings.upload_dir, report_id)
+    if storage_mode() == "disk" and os.path.isdir(folder):
+        shutil.rmtree(folder, ignore_errors=True)

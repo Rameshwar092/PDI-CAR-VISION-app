@@ -2,9 +2,9 @@ from datetime import date, datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
 from pymongo import ReturnDocument
 from ..database import get_db
-from ..security import get_current_user
+from ..security import get_current_user, require_admin
+from ..services.storage import save_photo, delete_report_photos
 from ..schemas.pdi import PDISave, ReportOut, ReportSummary, PhotoUploadOut
-from ..services.storage import save_photo
 from ..services.phone import normalize_mobile
 
 router = APIRouter(prefix="/pdi", tags=["pdi"])
@@ -106,3 +106,13 @@ async def upload_photo(report_id: str, label: str = Form(...), file: UploadFile 
     await db.reports.update_one({"id": report_id}, {"$set": {f"data.photos.{label}": url}})
     doc = await db.reports.find_one({"id": report_id})
     return PhotoUploadOut(label=label, url=url, report=_to_out(doc))
+
+
+@router.delete("/{report_id}", status_code=204)
+async def delete_report(report_id: str, admin: dict = Depends(require_admin)):
+    """Admin only: permanently delete a report and all its photos."""
+    db = get_db()
+    result = await db.reports.delete_one({"id": report_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Report not found")
+    await delete_report_photos(report_id)
