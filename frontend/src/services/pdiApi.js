@@ -87,3 +87,12 @@ export async function saveReport(data, status, existingId) {
   }
   return report
 }
+
+// Admin only: permanently delete a report and its photos.
+export async function deleteReport(id) {
+  if (USE_MOCK) {
+    localStorage.setItem(K, JSON.stringify(load().filter(r => r.id !== id)))
+    return
+  }
+  await api(`/pdi/${encodeURIComponent(id)}`, { method: 'DELETE' })
+}
