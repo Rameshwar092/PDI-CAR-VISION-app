@@ -4,6 +4,7 @@ import StatusBadge from '../StatusBadge.jsx'
 import SignaturePad from '../SignaturePad.jsx'
 import MultiSelect from '../MultiSelect.jsx'
 import { toast } from '../Toast.jsx'
+import { compressImage } from '../../services/ImageCompress.js'
 
 export function validateVehicle(v) {
   const e = {}
@@ -48,8 +49,11 @@ export function ChecklistSection({ section, form, set }) {
 }
 
 export function Photos({ form, set }) {
-  const pick = (label, file) => { if (!file) return; const r = new FileReader()
-    r.onload = () => set({ ...form, photos: { ...form.photos, [label]: r.result } }); r.readAsDataURL(file) }
+  const pick = async (label, file) => {
+    if (!file) return
+    try { const small = await compressImage(file); set(f => ({ ...f, photos: { ...f.photos, [label]: small } })) }
+    catch (e) { toast(e.message || 'Could not add that photo', 'err') }
+  }
   return (<section className="card"><h3>Photos</h3><div className="photos">{PHOTOS.map(p => (
     <label key={p} className="photo">{form.photos[p] ? <img src={form.photos[p]} alt={p} /> : <div className="ph">+</div>}
       <span className="small">{p}</span><input hidden type="file" accept="image/*" onChange={e => pick(p, e.target.files[0])} /></label>))}</div></section>)
@@ -72,6 +76,8 @@ export default function PDIForm({ initial, onSave, onSubmit }) {
   const [form, set] = useState(initial || emptyForm())
   const [step, setStep] = useState(0)
   const [errors, setErrors] = useState({})
+  const [busy, setBusy] = useState('')
+  const run = async (kind, fn) => { if (busy) return; setBusy(kind); try { await fn() } finally { setBusy('') } }
   const steps = ['Basic Details', ...SECTIONS.map(s => s.title), 'Photos', 'Final']
   const last = steps.length - 1
   const goto = i => { setStep(i); window.scrollTo({ top: 0 }) }
@@ -81,13 +87,13 @@ export default function PDIForm({ initial, onSave, onSubmit }) {
     return true
   }
   const next = () => { if (step === 0 && !checkBasics()) return; goto(step + 1) }
-  const draft = () => { if (!form.vehicle.vin && !form.vehicle.customerName) return toast('Add a VIN or customer name to save a draft', 'err'); onSave(form) }
+  const draft = () => { if (!form.vehicle.vin && !form.vehicle.customerName) return toast('Add a VIN or customer name to save a draft', 'err'); run('draft', () => onSave(form)) }
   const submit = e => {
     e.preventDefault()
     if (step < last) return next()
     if (!checkBasics()) return
     if (!form.signature.trim()) return toast('Draw your signature in the signature box', 'err')
-    onSubmit(form)
+    run('submit', () => onSubmit(form))
   }
   return (<form onSubmit={submit} noValidate>
     <div className="steps">{steps.map((s, i) => (
@@ -103,11 +109,11 @@ export default function PDIForm({ initial, onSave, onSubmit }) {
     <div className="between form-actions">
       <div className="row">
         <button type="button" className="btn ghost" disabled={step === 0} onClick={() => goto(step - 1)}>Previous</button>
-        <button type="button" className="btn ghost" onClick={draft}>Save as Draft</button>
+        <button type="button" className="btn ghost" onClick={draft} disabled={!!busy}>{busy === 'draft' ? 'Saving...' : 'Save as Draft'}</button>
       </div>
       <div className="row">
         <button type="button" className="btn ghost" onClick={() => { set(initial || emptyForm()); setErrors({}); goto(0) }}>Reset</button>
-        <button className="btn">{step === last ? 'Submit Report' : 'Next Step'}</button>
+        <button className="btn" disabled={!!busy}>{busy === 'submit' ? 'Submitting...' : step === last ? 'Submit Report' : 'Next Step'}</button>
       </div>
     </div>
   </form>)

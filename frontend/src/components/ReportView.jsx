@@ -10,7 +10,7 @@ import { toast } from './Toast.jsx'
 
 // Photo URLs are stored as /uploads/... on the backend server, not on the website's own domain.
 const API_ORIGIN = (() => { try { return new URL(BASE, window.location.href).origin } catch { return '' } })()
-const assetUrl = src => (typeof src === 'string' && src.startsWith('/uploads/') ? API_ORIGIN + src : src)
+const assetUrl = src => (typeof src === 'string' && (src.startsWith('/uploads/') || src.startsWith('/api/photos/')) ? API_ORIGIN + src : src)
 
 const tone = { PASS: 'green', 'PASS WITH OBSERVATIONS': 'amber', FAIL: 'red' }
 

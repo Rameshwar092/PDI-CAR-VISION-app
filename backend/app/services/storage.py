@@ -1,6 +1,12 @@
 """Photo storage.
 
-Photos are written to disk under UPLOAD_DIR/<report_id>/<label>.<ext> and
+PHOTO_STORAGE=disk  (default on a normal server) — files on disk, served at /uploads/...
+PHOTO_STORAGE=mongo (default on Vercel)          — photos stored in MongoDB, served at
+                    /api/photos/<report>/<file>. Needed on serverless hosts like Vercel,
+                    whose disk is read-only. Photos are compressed on the phone first
+                    (~150-400 KB each), so the free 512 MB Atlas tier holds a few hundred reports.
+
+Disk mode details: photos are written to disk under UPLOAD_DIR/<report_id>/<label>.<ext> and
 served back as static files at /uploads/... — only that URL string is
 stored in the MongoDB report document. This is what keeps each report
 document to a few tens of KB even though the photos themselves can be
@@ -12,8 +18,21 @@ that needs to change: keep the same save_photo(report_id, label, upload)
 """
 import os
 import re
+from datetime import datetime, timezone
+
+from bson import Binary
 from fastapi import UploadFile, HTTPException
 from .. import config
+from ..database import get_db
+
+_CONTENT_TYPES = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp"}
+
+
+def storage_mode() -> str:
+    mode = (config.settings.photo_storage or "auto").lower()
+    if mode == "auto":
+        return "mongo" if os.environ.get("VERCEL") else "disk"
+    return mode
 
 ALLOWED_EXT = {"jpg", "jpeg", "png", "webp"}
 
@@ -55,11 +74,26 @@ async def save_photo(report_id: str, label: str, upload: UploadFile) -> str:
     if not _looks_like_image(contents):
         raise HTTPException(status_code=400, detail="That file doesn't look like a real image")
 
+    filename = f"{_safe_label(label)}.{ext}"
+    if storage_mode() == "mongo":
+        await get_db().photos.replace_one(
+            {"_id": f"{report_id}/{filename}"},
+            {"_id": f"{report_id}/{filename}", "reportId": report_id, "data": Binary(contents),
+             "contentType": _CONTENT_TYPES.get(ext, "image/jpeg"), "size": len(contents),
+             "updatedAt": datetime.now(timezone.utc)},
+            upsert=True,
+        )
+        return f"/api/photos/{report_id}/{filename}"
+
     folder = os.path.join(settings.upload_dir, report_id)
     os.makedirs(folder, exist_ok=True)
-    filename = f"{_safe_label(label)}.{ext}"
     path = os.path.join(folder, filename)
     with open(path, "wb") as f:
         f.write(contents)
 
     return f"/uploads/{report_id}/{filename}"
+
+
+async def load_photo(report_id: str, filename: str) -> dict | None:
+    """Mongo mode: return {'data': bytes, 'contentType': str} or None."""
+    return await get_db().photos.find_one({"_id": f"{report_id}/{filename}"})

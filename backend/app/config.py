@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     # a report unsafe at scale — this keeps each report document to a few
     # tens of KB regardless of how many photos are attached.
     upload_dir: str = "uploads"
+    # disk | mongo | auto (auto = mongo on Vercel, disk elsewhere). See services/storage.py
+    photo_storage: str = "auto"
     max_photo_mb: int = 8
 
     cors_origins: str = "http://localhost:5173"

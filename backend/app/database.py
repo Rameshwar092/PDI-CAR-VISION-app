@@ -28,6 +28,7 @@ async def ensure_indexes():
     await db.reports.create_index([("customerMobile", 1), ("status", 1)])
     # OTP records delete themselves an hour after the last OTP was sent
     await db.otps.create_index("purgeAt", expireAfterSeconds=0)
+    await db.photos.create_index("reportId")
     await _backfill_customer_mobile(db)
 
 
