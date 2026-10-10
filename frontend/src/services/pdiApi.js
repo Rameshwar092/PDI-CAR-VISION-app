@@ -48,7 +48,10 @@ async function uploadPhoto(reportId, label, dataUrl) {
   const res = await fetch(`${BASE}/pdi/${reportId}/photos`, {
     method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {}, body: form,
   })
-  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || 'Photo upload failed')
+  if (!res.ok) {
+    if (res.status === 413) throw new Error('photo is too large')
+    throw new Error((await res.json().catch(() => ({}))).detail || `upload failed (${res.status})`)
+  }
   return res.json() // { label, url, report }
 }
 
@@ -69,9 +72,18 @@ export async function saveReport(data, status, existingId) {
   const qs = existingId ? `?report_id=${existingId}` : ''
   let report = await api(`/pdi${qs}`, { method: 'POST', body })
 
+  const failed = []
   for (const [label, dataUrl] of pendingPhotos) {
-    const result = await uploadPhoto(report.id, label, dataUrl)
-    report = result.report
+    try {
+      const result = await uploadPhoto(report.id, label, dataUrl)
+      report = result.report
+    } catch (e) {
+      failed.push(`${label} (${e.message})`)
+    }
+  }
+  if (failed.length) {
+    throw Object.assign(new Error(`${failed.length} photo${failed.length > 1 ? 's' : ''} failed to upload: ${failed.join(', ')}`),
+      { reportId: report.id })
   }
   return report
 }

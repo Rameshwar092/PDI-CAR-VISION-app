@@ -3,13 +3,14 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from .config import settings, INSECURE_DEFAULT_SECRETS
 from .database import get_db, get_client, ensure_indexes, close_client
 from .security import hash_password
 from .routers import auth, users, pdi, customer
+from .services.storage import storage_mode, load_photo
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger("pdi_car_vision")
@@ -37,7 +38,8 @@ async def lifespan(app: FastAPI):
             "before starting the server — this signs every login token. For local testing only, "
             "you can bypass this by setting ALLOW_INSECURE_SECRET=true, but never do that in production."
         )
-    os.makedirs(settings.upload_dir, exist_ok=True)
+    if storage_mode() == "disk":
+        os.makedirs(settings.upload_dir, exist_ok=True)
     await ensure_indexes()
     await _seed_admin()
     if settings.sms_provider.lower() == "console":
@@ -66,9 +68,20 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=500, content={"detail": "Something went wrong. Please try again."})
 
 
-# Photo files are served straight from disk — only their URL is stored in MongoDB.
-os.makedirs(settings.upload_dir, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads")
+# Disk mode: photo files are served straight from disk — only their URL is stored in MongoDB.
+if storage_mode() == "disk":
+    os.makedirs(settings.upload_dir, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads")
+
+
+# Mongo mode (Vercel): photos are stored in MongoDB and served from here.
+@app.get("/api/photos/{report_id}/{filename}")
+async def get_photo(report_id: str, filename: str):
+    doc = await load_photo(report_id, filename)
+    if not doc:
+        return JSONResponse(status_code=404, content={"detail": "Photo not found"})
+    return Response(content=bytes(doc["data"]), media_type=doc.get("contentType", "image/jpeg"),
+                    headers={"Cache-Control": "public, max-age=86400"})
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
