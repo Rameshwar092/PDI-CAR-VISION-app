@@ -337,3 +337,79 @@ select.invalid,input.invalid{border-color:var(--red)}
   .cust-top,.cust-foot{display:none!important}
   .cust,.cust-main{background:#fff;padding:0;min-height:0}
 }
+
+/* ---------- PDI report: compact full-checklist format (fits ~2-3 A4 pages) ---------- */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+button.link{background:none;border:0;padding:0;color:var(--blue);text-decoration:underline;cursor:pointer;font:inherit}
+.seg.invalid .seg-btn{border-color:var(--red)}
+.report2{font-size:12px}
+.report2 h4{margin:12px 0 6px;font-size:13px}
+.report2 .rhead{padding:14px 32px}.report2 .rmeta h2{font-size:16px}
+.r2-summary{display:grid;grid-template-columns:2.4fr 1fr 1fr 1fr;gap:8px;margin:2px 0 8px}
+.r2-results{display:flex;flex-direction:column;gap:4px}
+.r2-res{display:flex;align-items:center;gap:8px;border:1px solid #d8dee8;border-radius:6px;padding:4px 8px;font-weight:600;font-size:11.5px;color:#777}
+.r2-box{width:14px;height:14px;border:1.5px solid #9aa4b2;border-radius:3px;display:inline-grid;place-items:center;font-size:11px;line-height:1;background:#fff;color:#111}
+.r2-res.on{color:#fff;border-color:transparent;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.r2-res.on.green{background:var(--green)}.r2-res.on.amber{background:var(--amber);color:#111}.r2-res.on.red{background:var(--red)}
+.r2-res.on .r2-box{border-color:#fff}
+.r2-stat{border-radius:8px;padding:6px;display:flex;flex-direction:column;justify-content:center;text-align:center;background:#f3f6fb;border:1px solid #e3e8f0;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.r2-stat b{font-size:20px;line-height:1.1}.r2-stat small{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#555}
+.r2-stat.ok b{color:var(--green)}.r2-stat.flag{background:#fff8e6;border-color:#f3d48a}.r2-stat.flag b{color:#b7791f}
+.r2-info{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #e3e8f0;border-radius:8px;overflow:hidden}
+.r2-info div{padding:4px 8px;border-bottom:1px solid #eef1f5;border-right:1px solid #eef1f5;min-width:0}
+.r2-info span{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:#777}
+.r2-info b{font-size:12px;word-break:break-word}
+.r2-none{background:#effaf4;border:1px solid #bfe6d2;color:#137a49;border-radius:8px;padding:6px 10px;font-weight:600;margin:0}
+.r2-issues{border:1px solid #f3d48a;border-radius:8px;overflow:hidden;background:#fffdf6}
+.r2-issue{display:grid;grid-template-columns:16px minmax(0,1fr) fit-content(50%);gap:6px;padding:4px 10px;border-top:1px solid #f6e3b4;font-size:12px}
+.r2-issue:first-child{border-top:0}
+.r2-issue small{color:#8a6d2f}.r2-issue b{color:#8a5a00;text-align:right}
+.r2-flag,.r2-row.flag .r2-icon,.r2-ans.flag .r2-icon{color:#e4a11b;font-weight:700}
+.r2-table{width:100%;border-collapse:collapse;font-size:11.5px}
+.r2-table th{background:#f3f6fb;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#555;padding:4px 8px;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.r2-table td{border-bottom:1px solid #eee;padding:3px 8px}
+.r2-ans .r2-icon{display:inline-block;width:14px;font-weight:700}
+.r2-ans.ok .r2-icon,.r2-row .r2-icon{color:var(--green)}
+.r2-ans.flag{background:#fff8e6;color:#7a4f00;font-weight:600;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.r2-ans.none{color:#999}
+.r2-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+.r2-col{display:flex;flex-direction:column;gap:8px;min-width:0}
+.r2-sec{border:1px solid #e3e8f0;border-radius:6px;overflow:hidden}
+.r2-sec-head{display:flex;justify-content:space-between;align-items:center;gap:6px;background:var(--blue-dark);color:#fff;padding:4px 8px;font-weight:700;font-size:11.5px;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.r2-sec-head .badge{font-size:9.5px;padding:1px 6px}
+.r2-row{display:grid;grid-template-columns:12px minmax(0,1fr) fit-content(52%);gap:6px;padding:2px 7px;border-top:1px solid #f0f2f6;font-size:10.5px;line-height:1.35}
+.r2-row .r2-icon{font-weight:700}
+.r2-row .r2-item{color:#333;min-width:0}
+.r2-row .r2-val{text-align:right;color:#222}
+.r2-row.flag{background:#fff8e6;-webkit-print-color-adjust:exact;print-color-adjust:exact}.r2-row.flag .r2-val{color:#7a4f00;font-weight:700}
+.r2-row.none{display:block;color:#999;font-style:italic}
+.r2-remark{font-size:11px;background:#f8fafc;border-left:3px solid var(--blue);padding:4px 8px;margin:4px 0 0}
+.r2-sec .r2-remark{margin:0;border-top:1px solid #eee}
+.r2-photos{grid-template-columns:repeat(6,1fr)!important;gap:6px}
+.r2-photos img{height:78px;width:100%;object-fit:cover}
+.r2-photos figcaption{font-size:9.5px}
+.r2-end{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:end}
+.r2-end p{margin:0}
+.r2-sign img{height:54px;display:block}.r2-sign .sigline{height:50px;border-bottom:1px solid #333}.r2-sign small{color:#555}
+.r2-legend{margin-top:10px;font-size:9.5px;color:#777;border-top:1px solid #eee;padding-top:6px}
+@media(max-width:800px){
+  .r2-summary{grid-template-columns:1fr 1fr 1fr}.r2-results{grid-column:1 / -1}
+  .r2-info{grid-template-columns:1fr 1fr}
+  .r2-cols{grid-template-columns:1fr}
+  .r2-issue{grid-template-columns:16px 1fr}.r2-issue b{grid-column:2;text-align:left}
+  .r2-photos{grid-template-columns:repeat(3,1fr)!important}
+  .r2-end{grid-template-columns:1fr}
+  .grid2{grid-template-columns:1fr}
+}
+@media print{
+  .r2-summary{grid-template-columns:2.4fr 1fr 1fr 1fr!important}.r2-results{grid-column:auto!important}
+  .r2-info{grid-template-columns:repeat(4,1fr)!important}.r2-cols{grid-template-columns:1fr 1fr!important}
+  .r2-photos{grid-template-columns:repeat(6,1fr)!important}.r2-end{grid-template-columns:2fr 1fr!important}
+}
+.exporting-pdf .r2-summary{grid-template-columns:2.4fr 1fr 1fr 1fr!important}.exporting-pdf .r2-results{grid-column:auto!important}
+.exporting-pdf .r2-info{grid-template-columns:repeat(4,1fr)!important}.exporting-pdf .r2-cols{grid-template-columns:1fr 1fr!important}
+.exporting-pdf .r2-issue{grid-template-columns:16px 1fr auto!important}.exporting-pdf .r2-issue b{grid-column:auto!important;text-align:right!important}
+.exporting-pdf .r2-photos{grid-template-columns:repeat(6,1fr)!important}.exporting-pdf .r2-end{grid-template-columns:2fr 1fr!important}

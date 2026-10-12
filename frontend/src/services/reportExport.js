@@ -30,7 +30,7 @@ function pdfOptions(fileName) {
       windowWidth: 900,
     },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.kv', 'figure', '.sigs', '.rresult', 'h4'] },
+        pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.r2-row', '.r2-issue', '.r2-sec-head', '.r2-summary', '.r2-info', 'figure', '.r2-end', 'h4'] },
   }
 }
 

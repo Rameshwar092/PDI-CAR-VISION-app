@@ -180,23 +180,59 @@ export const SECTIONS = [
 export const PHOTOS = ['Front View', 'Rear View', 'Left Side', 'Right Side', 'Interior', 'Engine Bay', 'Odometer', 'Tyres', 'Damage / Issue']
 
 export const emptyForm = () => ({
-  vehicle: {}, checks: {}, other: {}, remarks: {}, photos: {}, result: 'PASS', inspectorRemarks: '', customerRemarks: '', signature: '',
+  vehicle: {}, checks: {}, other: {}, remarks: {}, photos: {}, result: '', inspectorRemarks: '', signature: '',
 })
 
-function sectionDefault(sectionKey, item) {
-  const s = SECTIONS.find(x => x.key === sectionKey)
-  const row = s && s.items.find(([label]) => label === item)
-  return row ? row[1][0] : ''
+// ---- Flag rules ------------------------------------------------------
+// A yellow flag means an ACTUAL defect or deficiency was found.
+// Not flagged: tyre brand ("... Tyre MFG"), OK/neutral answers in OK_ANSWERS,
+// and "Other (Specify)" left empty. To make a new option count as OK,
+// add it (in lowercase) to OK_ANSWERS.
+const OK_ANSWERS = new Set([
+  'all ok', 'ok', 'no fault detected', 'working perfectly', 'working ok', 'normal', 'good', 'sufficient', 'smooth',
+  'na', 'not applicable', 'not available', 'available', 'no leakage', 'no issue detected',
+  'both headlights are working', 'both fog lamp are working', 'both tail lights are working',
+  'all sensors are working', 'all vents working perfectly', 'all controls working', 'all switches are ok',
+  'no warning light shown', 'neat and clean', 'all door controls work', 'not declined by dealer',
+  'engine code not found', 'chassis verified', 'verified through obd',
+  'to be checked by owner', 'to be checked by pdi expert',
+].map(x => x.toLowerCase()))
+const OTHER = 'Other (Specify)'
+
+/** Items that only record information (shown in the report, never flagged). */
+export const isInfoItem = (sectionKey, item) => sectionKey === 'tyres' && / MFG$/i.test(item)
+
+/** Is this one selected answer a defect? */
+export function isDefectValue(value, otherText = '') {
+  if (value === OTHER) return Boolean(String(otherText || '').trim())
+  return !OK_ANSWERS.has(String(value).trim().toLowerCase())
 }
-// An item is "flagged" when its selected array has anything beyond just the single default (all-ok/normal) option.
-export const isFlagged = (checks, sectionKey, item) => {
-  const v = checks[`${sectionKey}.${item}`]
+
+// An item is "flagged" (yellow) when at least one selected answer is a real defect.
+export const isFlagged = (checks, sectionKey, item, other = {}) => {
+  if (isInfoItem(sectionKey, item)) return false
+  const key = `${sectionKey}.${item}`
+  const v = checks[key]
   if (!v || !v.length) return false
-  const def = sectionDefault(sectionKey, item)
-  return v.length > 1 || v[0] !== def
+  return v.some(value => isDefectValue(value, other[key]))
 }
-export const sectionStatus = (checks, sectionKey) => {
+
+export const sectionStatus = (checks, sectionKey, other = {}) => {
   const s = SECTIONS.find(x => x.key === sectionKey)
-  const flagged = s.items.filter(([label]) => isFlagged(checks, sectionKey, label)).length
+  const flagged = s.items.filter(([label]) => isFlagged(checks, sectionKey, label, other)).length
   return flagged ? `${flagged} flagged` : 'All OK'
+}
+
+/** The answers to show for an item, with "Other (Specify)" replaced by the typed note. */
+export const answerText = (checks, sectionKey, item, other = {}) => {
+  const key = `${sectionKey}.${item}`
+  return (checks[key] || []).filter(value => value !== OTHER || String(other[key] || '').trim())
+    .map(value => (value === OTHER ? other[key] : value))
+}
+
+/** Only the defect answers of an item (what goes in the "Issues found" list). */
+export const defectText = (checks, sectionKey, item, other = {}) => {
+  const key = `${sectionKey}.${item}`
+  return (checks[key] || []).filter(value => isDefectValue(value, other[key]))
+    .map(value => (value === OTHER ? other[key] : value))
 }

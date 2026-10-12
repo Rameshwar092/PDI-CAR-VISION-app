@@ -31,11 +31,11 @@ export function BasicDetails({ form, set, errors = {} }) {
 
 export function ChecklistSection({ section, form, set }) {
   return (<section className="card"><div className="between"><h3>{section.title}</h3>
-    <StatusBadge value={sectionStatus(form.checks, section.key)} /></div>
+    <StatusBadge value={sectionStatus(form.checks, section.key, form.other)} /></div>
     <div className="split">
       <table className="table checklist"><tbody>{section.items.map(([item, options]) => {
         const key = `${section.key}.${item}`, cur = form.checks[key] || []
-        const flagged = isFlagged(form.checks, section.key, item)
+       const flagged = isFlagged(form.checks, section.key, item, form.other)
         return (<tr key={key}><td>{item}</td><td>
           <MultiSelect options={options} value={cur} flagged={flagged}
             onChange={next => set({ ...form, checks: { ...form.checks, [key]: next } })} />
@@ -59,14 +59,26 @@ export function Photos({ form, set }) {
       <span className="small">{p}</span><input hidden type="file" accept="image/*" onChange={e => pick(p, e.target.files[0])} /></label>))}</div></section>)
 }
 
-export function FinalResult({ form, set }) {
-  return (<section className="card"><h3>Final Result</h3>
-    <div className="seg big">{['PASS', 'PASS WITH OBSERVATIONS', 'FAIL'].map(r => (
+export const RESULTS = ['PASS', 'PASS WITH OBSERVATIONS', 'FAIL']
+
+/** Suggest a result from the flags; the inspector still makes the final choice. */
+export function suggestResult(form) {
+  const flagged = SECTIONS.reduce((n, s) => n + s.items.filter(([item]) => isFlagged(form.checks, s.key, item, form.other)).length, 0)
+  return { flagged, result: flagged ? 'PASS WITH OBSERVATIONS' : 'PASS' }
+}
+
+export function FinalResult({ form, set, error }) {
+  const hint = suggestResult(form)
+  return (<section className="card"><h3>Final Result <span className="req">*</span></h3>
+    <p className="small muted">Select the overall result for this vehicle.
+      {' '}{hint.flagged ? `${hint.flagged} item(s) are flagged` : 'No items are flagged'} {'\u2014'} suggested: <b>{hint.result}</b>
+      {form.result !== hint.result && <> <button type="button" className="link" onClick={() => set({ ...form, result: hint.result })}>Use suggestion</button></>}</p>
+    <div className={`seg big ${error ? 'invalid' : ''}`}>{RESULTS.map(r => (
       <button type="button" key={r} className={`seg-btn R-${r.replace(/ /g, '')} ${form.result === r ? 'on' : ''}`}
-        onClick={() => set({ ...form, result: r })}>{r}</button>))}</div>
-    <div className="grid3">
+        onClick={() => set({ ...form, result: r })}>{form.result === r ? '\u2713 ' : ''}{r}</button>))}</div>
+    {error && <span className="field-err">{error}</span>}
+    <div className="grid2">
       <label>Inspector Remarks<textarea rows={3} value={form.inspectorRemarks} onChange={e => set({ ...form, inspectorRemarks: e.target.value })} /></label>
-      <label>Customer Remarks<textarea rows={3} value={form.customerRemarks} onChange={e => set({ ...form, customerRemarks: e.target.value })} /></label>
       <div><span className="small muted">Inspector Signature <span className="req">*</span> (sign with mouse or finger)</span>
         <SignaturePad value={form.signature} onChange={v => set({ ...form, signature: v })} /></div>
     </div></section>)
@@ -92,6 +104,7 @@ export default function PDIForm({ initial, onSave, onSubmit }) {
     e.preventDefault()
     if (step < last) return next()
     if (!checkBasics()) return
+    if (!RESULTS.includes(form.result)) { setErrors({ ...errors, result: 'Select PASS, PASS WITH OBSERVATIONS or FAIL' }); return toast('Select the final result', 'err') }
     if (!form.signature.trim()) return toast('Draw your signature in the signature box', 'err')
     run('submit', () => onSubmit(form))
   }
@@ -104,7 +117,7 @@ export default function PDIForm({ initial, onSave, onSubmit }) {
     {step === 0 && <BasicDetails form={form} set={set} errors={errors} />}
     {step >= 1 && step <= SECTIONS.length && <ChecklistSection section={SECTIONS[step - 1]} form={form} set={set} />}
     {step === last - 1 && <Photos form={form} set={set} />}
-    {step === last && <FinalResult form={form} set={set} />}
+    {step === last && <FinalResult form={form} set={(f) => { set(f); if (errors.result && RESULTS.includes(f.result)) setErrors({ ...errors, result: undefined }) }} error={errors.result} />}
 
     <div className="between form-actions">
       <div className="row">
