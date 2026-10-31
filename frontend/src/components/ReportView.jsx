@@ -5,7 +5,7 @@ import { BASE } from '../services/api.js'
 import StatusBadge from './StatusBadge.jsx'
 import { SECTIONS, sectionStatus, isFlagged, isInfoItem, answerText, defectText } from './PDIForm/sections.js'
 import logo from '../assets/logo.png'
-import { downloadReportPdf, printReport } from '../services/reportExport.js'
+import { downloadStructuredPdf, printReport } from '../services/reportExport.js'
 import { toast } from './Toast.jsx'
 
 // Photo URLs are stored as /uploads/... on the backend server, not on the website's own domain.
@@ -35,7 +35,7 @@ export default function ReportView({ back, backLabel = 'Back to Reports', loader
     if (!element || busy) return
     setBusy('pdf')
     try {
-      toast(await downloadReportPdf(element, `PDI-Report-${r.id}.pdf`))
+         toast(await downloadStructuredPdf(r, `PDI-Report-${r.id}.pdf`, { assetUrl, logoSrc: logo }))
     } catch (error) {
       console.error('PDF generation failed:', error)
       toast('Unable to create the PDF. Please try again.', 'err')
